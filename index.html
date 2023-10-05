@@ -11,10 +11,12 @@
     <title>Document</title>
     <link rel="stylesheet" href="style/index.css" />
   </head>
+
   <body>
     <header>
       <h1 class="header_text">Header</h1>
     </header>
+
     <form class="form">
       <div class="form__top">
         <h1 class="form__top_text">Шукаєте роботу чи няню?</h1>
@@ -29,23 +31,32 @@
         <div class="form__input_full_name">
           <input
             class="form__input_first_name"
+            name="first_name"
             type="text"
             placeholder="First name"
           />
           <input
             class="form__input_second_name"
+            name="last_name"
             type="text"
             placeholder="Second name"
           />
         </div>
-        <input class="form__input_email" type="email" placeholder="Email" />
+        <input
+          class="form__input_email"
+          name="email"
+          type="email"
+          placeholder="Email"
+        />
         <input
           class="form__input_password"
+          name="password"
           type="password"
           placeholder="Password"
         />
         <input
           class="form__input_password_reat"
+          name="confirm_password"
           type="password"
           placeholder="Password repeat"
         />
@@ -89,9 +100,11 @@
         </h1>
       </div>
     </form>
+
     <footer>
       <h1 class="footer_text">Footer</h1>
     </footer>
+
     <script src="scripts/index.js"></script>
   </body>
 </html>
