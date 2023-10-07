@@ -1,0 +1,237 @@
+const getAllProducts = async () => {
+  return await fetch("https://fakestoreapi.com/products")
+    .then((res) => res.json())
+    .then((json) => {
+      localStorage.setItem("products", JSON.stringify(json));
+      return json;
+    })
+    .catch((err) => console.log(err));
+};
+
+const getAllCategory = async () => {
+  return await fetch("https://fakestoreapi.com/products/categories")
+    .then((res) => res.json())
+    .then((json) => {
+      localStorage.setItem("category", JSON.stringify(json));
+      return json;
+    })
+    .catch((err) => console.log(err));
+};
+
+const showCounterCart = () => {
+  // get cart from LS
+  const CART = localStorage.getItem("cart");
+  if (CART) {
+    // get element
+    const COUNTER = document.querySelector(".products__cart_counter");
+    // calc qty products
+    let allProductsQty = 0;
+    JSON.parse(CART).map((e) => {
+      allProductsQty += e.qty;
+    });
+    // display qty
+    COUNTER.innerHTML = allProductsQty;
+  } else {
+    // If the cart is empty or doesn't exist, set the counter to 0
+    const COUNTER = document.querySelector(".products__cart_counter");
+    COUNTER.innerHTML = 0;
+  }
+};
+
+const showProductsOnDOM = async (products, selector) => {
+  // create html
+  let html = "";
+  // check if is elements in array
+  products.length > 0
+    ? products.map((e) => {
+        const { title, description, category, id, price, image } = e;
+        html += `
+              <div data-category="${category}" data-id="${id}" class="products__area_item">
+              <img src="${image}" alt="">
+              <h2>${title}</h2>
+              <h4>${price} $</h4>
+              <p>${description}</p>
+              <button data-id=${id} class="add_to_cart">
+                  Add to Cart
+              </button>
+              <button data-id=${id} class="delete_from_cart">Delete from Cart</button>
+          </div>
+              `;
+      })
+    : (html = "<h1>Products not found</h1>");
+  // get element
+  const AREA = document.querySelector(selector);
+  // instert html in DOM
+  AREA.innerHTML = html;
+  // add listeners
+  const ADD_TO_CART_BTNS = document.querySelectorAll(".add_to_cart");
+  const REMOVE_FROM_CART_BTNS = document.querySelectorAll(".delete_from_cart");
+  // add listeners
+  ADD_TO_CART_BTNS.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const PRODUCT_ID = e.target.getAttribute("data-id");
+      addProductsToCart(PRODUCT_ID);
+    });
+  });
+  REMOVE_FROM_CART_BTNS.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const PRODUCT_ID = e.target.getAttribute("data-id");
+      removeProductsFromCart(PRODUCT_ID);
+    });
+  });
+};
+
+const showCategoriesOnDOM = async (categories, selector) => {
+  // create html
+  let html = "<option selected disabled>Choose category</option>";
+  // check if is elements in array
+  categories.length > 0
+    ? categories.map((e) => {
+        html += `
+            <option value="${e}">${e}</option>
+            `;
+      })
+    : (html = "");
+  // show in html
+  $(selector).append(html);
+};
+
+const addNewProduct = async () => {
+  await fetch("https://fakestoreapi.com/products", {
+    method: "POST",
+    body: JSON.stringify({
+      title: "test product",
+      price: 13.5,
+      description: "lorem ipsum set",
+      image: "https://i.pravatar.cc",
+      category: "electronic",
+    }),
+  })
+    .then((res) => res.json())
+    .then((json) => console.log(json))
+    .catch((err) => console.log(err));
+};
+
+const filterBySearchQuery = (products, query, selector_area) => {
+  let filteredProducts = products.filter((item) =>
+    item.title.toLowerCase().includes(query.toLowerCase())
+  );
+  localStorage.setItem("dynamic_products", JSON.stringify(filteredProducts));
+  showProductsOnDOM(filteredProducts, selector_area);
+};
+
+const sortProducts = (products, type, selector_area) => {
+  let sortedProducts;
+  if (type == "ASC") {
+    sortedProducts = products.sort((a, b) => a.price - b.price);
+  } else {
+    sortedProducts = products.sort((a, b) => b.price - a.price);
+  }
+  showProductsOnDOM(sortedProducts, selector_area);
+};
+
+const addProductsToCart = (product_id) => {
+  // get cart from LS
+  let cart = localStorage.getItem("cart");
+  // check if is CART
+  cart ? (cart = JSON.parse(cart)) : (cart = []);
+  // check if cart empty
+  if (cart.length > 0) {
+    let index = cart.findIndex((product) => product_id == product.id);
+    // check if exist product in cart
+    if (index != -1) {
+      cart[index].qty++;
+    } else {
+      cart.push({
+        id: product_id,
+        qty: 1,
+      });
+    }
+  } else {
+    cart.push({ id: product_id, qty: 1 });
+  }
+  // write to LS
+  localStorage.setItem("cart", JSON.stringify(cart));
+  // display counter cart
+  showCounterCart();
+};
+
+const removeProductsFromCart = (product_id) => {
+  // get cart from LS
+  let cart = localStorage.getItem("cart");
+  // check if is CART
+  cart ? (cart = JSON.parse(cart)) : (cart = []);
+  // check if cart empty
+  if (cart.length > 0) {
+    let index = cart.findIndex((product) => product_id == product.id);
+    // check if exist product in cart
+    if (index != -1) {
+      if (cart[index].qty > 1) {
+        cart[index].qty--;
+      } else {
+        cart.splice(index, 1);
+      }
+    }
+  }
+  // write to LS
+  localStorage.setItem("cart", JSON.stringify(cart));
+  // display counter cart
+  showCounterCart();
+};
+
+// clear cart
+const clearCart = () => {
+  localStorage.removeItem("cart");
+  showCounterCart();
+};
+
+// cleaner LS
+document.addEventListener("DOMContentLoaded", () => {
+  localStorage.removeItem("dynamic_products");
+});
+
+// start point
+document.addEventListener("DOMContentLoaded", async () => {
+  // get path
+  const PATH = window.location.pathname;
+  console.log(PATH);
+
+  showCounterCart();
+  // get elements DOM
+  const INPUT_SELECT = document.querySelector("#products__sort");
+  const INPUT_SEARCH = document.querySelector("#filter_search");
+  const INPUT_CATEGORY = document.querySelector("#filter_category");
+  const CLEAR = document.querySelector("#clear");
+  // get all products
+  const PRODUCTS = await getAllProducts();
+  // get all categories
+  const CATEGORIES = await getAllCategory();
+  // display products
+  showProductsOnDOM(PRODUCTS, ".products__area");
+  showCategoriesOnDOM(CATEGORIES, "#category");
+
+  // add event listeners
+  CLEAR.addEventListener("click", () => {
+    clearCart();
+    showCounterCart();
+  });
+  INPUT_SELECT.addEventListener("change", (e) => {
+    // get dynamic products
+    let current_products;
+    const DYNAMIC_PRODUCTS = localStorage.getItem("dynamic_products");
+    DYNAMIC_PRODUCTS
+      ? (current_products = JSON.parse(DYNAMIC_PRODUCTS))
+      : (current_products = PRODUCTS);
+    sortProducts(current_products, e.target.value, ".products__area");
+  });
+  INPUT_SEARCH.addEventListener("input", (e) => {
+    filterBySearchQuery(PRODUCTS, e.target.value, ".products__area");
+  });
+  $("#category").on("change", () => {
+    const VALUE = $("#category").val();
+    const FILTERED_PRODUCTS = PRODUCTS.filter(
+      (products) => products.category == VALUE
+    );
+    showProductsOnDOM(FILTERED_PRODUCTS, ".products__area");
+  });
+});
